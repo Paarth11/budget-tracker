@@ -1,21 +1,22 @@
-name: AWS Login Test
+name: AWS login test
 on: workflow_dispatch
- 
+
 jobs:
-    whoami:
-        runs-on: ubuntu-latest
-        environment: production 
-        permissions: 
-            id-token: write
-            contents: read
-        steps:
-            - uses: aws-actions/configure-aws-credentials@v4
-              with:
-                role-to-assume: ${{vars.AWS_ROLE_ARN}}
-                aws-region: ${{vars.AWS_REGION}}
-            - run: aws sts get-caller-identity 
-            - name: Show the OIDC claims GitHub sends
-              run: | 
-               TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-               "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
-                echo "$TOKEN" | cut -d. -f2 | python3 -c "import sys,base64,json; s=sys.stdin.read().strip(); s+='='*(-len(s)%4); c=json.loads(base64.urlsafe_b64decode(s)); print({k:c.get(k) for k in ('sub','aud','repository','environment')})"
+  whoami:
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Show the OIDC claims GitHub sends
+        run: |
+          TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
+          echo "$TOKEN" | cut -d. -f2 | python3 -c "import sys,base64,json; s=sys.stdin.read().strip(); s+='='*(-len(s)%4); c=json.loads(base64.urlsafe_b64decode(s)); print({k:c.get(k) for k in ('sub','aud','repository','environment')})"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - run: aws sts get-caller-identity
