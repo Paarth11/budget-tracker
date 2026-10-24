@@ -1,0 +1,25 @@
+# docker compose -f docker-compose.prod.yml --env-file .env up -d --build
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tracker
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: tracker
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # users' data lives here; back it up
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://tracker:${DB_PASSWORD}@db:5432/tracker
+      JWT_SECRET: ${JWT_SECRET}
+      # Set to "true" once the site is served over HTTPS (it should be).
+      COOKIE_SECURE: "false"
+    ports:
+      - "4000:4000"
+volumes:
+  pgdata:
