@@ -3,8 +3,10 @@ import { Pool, types } from 'pg';
 types.setTypeParser(1700, (v) => parseFloat(v)); // NUMERIC -> number
 types.setTypeParser(1082, (v) => v); // DATE -> 'YYYY-MM-DD' string
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined,
+});
 const schema = `
 CREATE TABLE IF NOT EXISTS users (
   id            SERIAL PRIMARY KEY,
@@ -44,3 +46,4 @@ CREATE INDEX IF NOT EXISTS transactions_item_idx ON transactions (item_id);
 `;
 
 export const migrate = () => pool.query(schema);
+
